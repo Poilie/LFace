@@ -1,0 +1,39 @@
+{
+ "model_config_list": [
+     {
+        "config": {
+             "name": "face-embedder",
+             "base_path": "/models/Arcface_16FP",
+             "plugin_config": {"PERFORMANCE_HINT": "THROUGHPUT"},
+             "target_device": "CPU"
+
+        }
+     },
+     {
+        "config": {
+             "name": "face-detector",
+             "base_path": "/models/SCRFD",
+             "plugin_config": {"PERFORMANCE_HINT": "THROUGHPUT"},
+             "target_device": "CPU"
+
+        }
+     }
+ ],
+ "monitoring":
+     {
+         "metrics":
+         {
+             "enable" : true,
+             "metrics_list":
+                 [ "ovms_requests_success",
+                 "ovms_requests_fail",
+                 "ovms_inference_time_us",
+                 "ovms_wait_for_infer_req_time_us",
+                 "ovms_request_time_us",
+                 "ovms_current_requests",
+                 "ovms_infer_req_active",
+                 "ovms_streams",
+                 "ovms_infer_req_queue_size"]
+         }
+     }
+}

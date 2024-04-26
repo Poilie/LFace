@@ -1,51 +1,57 @@
-from __future__ import annotations
+from ovmsclient import make_grpc_client, make_http_client
+import time
+import cv2
+import numpy as np
+import asyncio
+from typing import Dict
 
-from typing import TYPE_CHECKING
+from litestar import Litestar, get
 
-if TYPE_CHECKING:
-    from litestar import Litestar
+from litestar_saq import QueueConfig, SAQConfig, SAQPlugin
+
+saq = SAQPlugin(config=SAQConfig(redis_url="redis://localhost:6397/0",
+                queue_configs=[QueueConfig(name="samples")]))
+
+
+client = make_grpc_client("localhost:9322")
+
+
+async def predict_image() -> None:
+    img = cv2.imread(
+        "/home/misa/Workshop/LFace/test_folder/test_data/112_user/5.jpg")
+    img = np.transpose(img, (2, 0, 1))
+    img = np.expand_dims(img, axis=0)
+    img = img.astype(np.float32)
+    # output = client.predict({"input.1": img}, "face-embedder")
+    # await for client to predict
+    client.predict({"input.1": img}, "face-embedder")
+    print("Predicted image")
+
+
+@get("/")
+async def hello_world() -> Dict[str, str]:
+    """Handler function that returns a greeting dictionary."""
+    # process_image()
+    await predict_image()
+    # wait 1 second
+    # await asyncio.sleep(1)
+    return {"hello": "world"}
 
 
 def create_app() -> Litestar:
-    """Create ASGI application."""
-
-    from litestar import Litestar
-    from litestar.di import Provide
-
-    from app.config import app as config
-    # from app.config import constants
-    from app.config.base import get_settings
-    # from server.domain.accounts import signals as account_signals
-    # from server.domain.accounts.dependencies import provide_user
-    from app.domain.accounts.guards import auth
-    # from server.domain.teams import signals as team_signals
-    # from server.lib.dependencies import create_collection_dependencies
-    from app.server import openapi
-    from app.server import plugins
-    # from app.server import routers
-
-    # dependencies = {constants.USER_DEPENDENCY_KEY: Provide(provide_user)}
-    # dependencies.update(create_collection_dependencies())
-    settings = get_settings()
-
+    from app.config import app as app_config
+    from app.server import openapi, plugins
+    """Create the Litestar application."""
     return Litestar(
-        cors_config=config.cors,
-        # dependencies=dependencies,
-        debug=settings.app.DEBUG,
-        # pdb_on_exception=1,
+        route_handlers=[hello_world],
         openapi_config=openapi.config,
-        # route_handlers=routers.route_handlers,
         plugins=[
-            plugins.app_config,
             plugins.structlog,
-            # plugins.alchemy,
-            # plugins.vite,
+            # saq,
             plugins.saq,
             plugins.granian,
-        ],
-        on_app_init=[auth.on_app_init],
-        # listeners=[account_signals.user_created_event_handler,
-        #            team_signals.team_created_event_handler],
+            plugins.app_config,
+        ]
     )
 
 

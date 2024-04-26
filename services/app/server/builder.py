@@ -51,7 +51,7 @@ class ApplicationConfigurator(InitPluginProtocol, CLIPluginProtocol):
             app_config: The :class:`AppConfig <.config.app.AppConfig>` instance.
         """
 
-        # from advanced_alchemy.exceptions import RepositoryError
+        from advanced_alchemy.exceptions import RepositoryError
         from litestar.security.jwt import Token
 
         from app.config import constants, get_settings
@@ -69,16 +69,16 @@ class ApplicationConfigurator(InitPluginProtocol, CLIPluginProtocol):
             default_factory=self.redis_store_factory)
         # type: ignore[attr-defined]
         app_config.on_shutdown.append(self.redis.aclose)
-        app_config.signature_namespace.update(
-            {
-                "Token": Token,
-                "OAuth2Login": OAuth2Login,
-                "UserModel": UserModel,
-            },
-        )
+        # app_config.signature_namespace.update(
+        #     {
+        #         "Token": Token,
+        #         "OAuth2Login": OAuth2Login,
+        #         "UserModel": UserModel,
+        #     },
+        # )
         app_config.exception_handlers = {
             ApplicationError: exception_to_http_response,
-            # RepositoryError: exception_to_http_response,
+            RepositoryError: exception_to_http_response,
         }
         return app_config
 

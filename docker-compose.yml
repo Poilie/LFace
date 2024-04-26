@@ -1,0 +1,44 @@
+# ignored options for 'model_server'
+# -g
+# -)
+version: "3"
+services:
+  cache:
+    image: redis:latest
+    ports:
+      - 16379:6379
+    hostname: cache
+    command: redis-server --appendonly yes
+    volumes:
+      - cache-data:/data
+    environment:
+      ALLOW_EMPTY_PASSWORD: yes
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 1s
+      timeout: 3s
+      retries: 30
+  model_server:
+    # user: $(id -u):$(id -g)
+    volumes:
+      - ${PWD}/models:/models
+    ports:
+      - 9322:9322
+      - 6541:6541
+    image: openvino/model_server:latest
+    # --model_path /models/face-recognition --model_name face-embedder
+    command: "
+      --config_path /models/config.json
+      --port 9322
+      --rest_port 6541 "
+volumes:
+  db-data: {}
+  cache-data: {}

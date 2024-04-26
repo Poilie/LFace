@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING, Any, Final
 
 from litestar.serialization import decode_json, encode_json
 from redis.asyncio import Redis
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.utils import module_to_os_path, slugify
 
@@ -74,7 +77,7 @@ class SaqSettings:
     """If true, the worker admin UI is hosted on worker startup."""
     USE_SERVER_LIFESPAN: bool = field(
         default_factory=lambda: os.getenv(
-            "SAQ_USE_SERVER_LIFESPAN", "True") in TRUE_VALUES,
+            "SAQ_USE_SERVER_LIFESPAN", "False") in TRUE_VALUES,
     )
     """Auto start and stop `saq` processes when starting the Litestar application."""
 
@@ -147,8 +150,6 @@ class LogSettings:
     """Log event name for logs from SAQ worker."""
     SAQ_LEVEL: int = 20
     """Level to log SAQ logs."""
-    SQLALCHEMY_LEVEL: int = 20
-    """Level to log SQLAlchemy logs."""
     UVICORN_ACCESS_LEVEL: int = 20
     """Level to log uvicorn access logs."""
     UVICORN_ERROR_LEVEL: int = 20
@@ -205,7 +206,7 @@ class AppSettings:
         "APP_URL", "http://localhost:8000"))
     """The frontend base URL"""
     DEBUG: bool = field(default_factory=lambda: os.getenv(
-        "LITESTAR_DEBUG", "True") in TRUE_VALUES)
+        "LITESTAR_DEBUG", "False") in TRUE_VALUES)
     """Run `Litestar` with `debug=True`."""
     SECRET_KEY: str = field(
         default_factory=lambda: os.getenv("SECRET_KEY", binascii.hexlify(
@@ -214,14 +215,6 @@ class AppSettings:
     """Application secret key."""
     NAME: str = field(default_factory=lambda: "app")
     """Application name."""
-    ALLOWED_CORS_ORIGINS: list[str] | str = field(
-        default_factory=lambda: os.getenv("ALLOWED_CORS_ORIGINS", '["*"]'))
-    """Allowed CORS Origins"""
-    CSRF_COOKIE_NAME: str = field(default_factory=lambda: "csrftoken")
-    """CSRF Cookie Name"""
-    CSRF_COOKIE_SECURE: bool = field(default_factory=lambda: False)
-    """CSRF Secure Cookie"""
-    JWT_ENCRYPTION_ALGORITHM: str = field(default_factory=lambda: "HS256")
     """JWT Encryption Algorithm"""
 
     @property
@@ -233,15 +226,15 @@ class AppSettings:
         """
         return slugify(self.NAME)
 
-    def __post_init__(self) -> None:
-        if isinstance(self.ALLOWED_CORS_ORIGINS, str):
-            if not self.ALLOWED_CORS_ORIGINS.startswith("["):
-                self.ALLOWED_CORS_ORIGINS = [
-                    host.strip() for host in self.ALLOWED_CORS_ORIGINS.split(",")]
-            elif self.ALLOWED_CORS_ORIGINS.startswith(
-                "[",
-            ) and self.ALLOWED_CORS_ORIGINS.endswith("]"):
-                self.ALLOWED_CORS_ORIGINS = list(self.ALLOWED_CORS_ORIGINS)
+    # def __post_init__(self) -> None:
+    #     if isinstance(self.ALLOWED_CORS_ORIGINS, str):
+    #         if not self.ALLOWED_CORS_ORIGINS.startswith("["):
+    #             self.ALLOWED_CORS_ORIGINS = [
+    #                 host.strip() for host in self.ALLOWED_CORS_ORIGINS.split(",")]
+    #         elif self.ALLOWED_CORS_ORIGINS.startswith(
+    #             "[",
+    #         ) and self.ALLOWED_CORS_ORIGINS.endswith("]"):
+    #             self.ALLOWED_CORS_ORIGINS = list(self.ALLOWED_CORS_ORIGINS)
 
 
 @dataclass
