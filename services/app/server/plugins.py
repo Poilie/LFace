@@ -9,5 +9,6 @@ from app.server.builder import ApplicationConfigurator
 
 structlog = StructlogPlugin(config=config.log)
 saq = SAQPlugin(config=config.saq)
+print(config.saq.worker_processes, config.saq.use_server_lifespan)
 granian = GranianPlugin()
 app_config = ApplicationConfigurator()

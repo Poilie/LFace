@@ -1,20 +1,12 @@
 import logging
 from typing import cast
 
-from advanced_alchemy.extensions.litestar import (
-    AlembicAsyncConfig,
-    AsyncSessionConfig,
-    SQLAlchemyAsyncConfig,
-    async_autocommit_before_send_handler,
-)
 from litestar.config.compression import CompressionConfig
-from litestar.config.cors import CORSConfig
-from litestar.config.csrf import CSRFConfig
 from litestar.logging.config import LoggingConfig, StructLoggingConfig
 from litestar.middleware.logging import LoggingMiddlewareConfig
 from litestar.plugins.structlog import StructlogConfig
-from litestar_saq import CronJob, QueueConfig, SAQConfig
-from litestar_vite import ViteConfig
+from litestar_saq import SAQConfig
+# from litestar_vite import ViteConfig
 
 from .base import get_settings
 
@@ -23,7 +15,7 @@ settings = get_settings()
 compression = CompressionConfig(backend="gzip")
 saq = SAQConfig(
     redis=settings.redis.client,
-    # web_enabled=settings.saq.WEB_ENABLED,
+    web_enabled=settings.saq.WEB_ENABLED,
     worker_processes=settings.saq.PROCESSES,
     use_server_lifespan=settings.saq.USE_SERVER_LIFESPAN,
     # queue_configs=[

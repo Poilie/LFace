@@ -11,7 +11,7 @@ services:
     hostname: cache
     command: redis-server --appendonly yes
     volumes:
-      - cache-data:/data
+      - docker_data/cache-data:/data
     environment:
       ALLOW_EMPTY_PASSWORD: yes
     restart: unless-stopped
@@ -42,3 +42,7 @@ services:
 volumes:
   db-data: {}
   cache-data: {}
+
+networks:
+  default:
+    name: LFace
